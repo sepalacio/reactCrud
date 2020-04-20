@@ -1,27 +1,22 @@
 import React, { Component } from 'react'
 
 class List extends Component {
-
-    onEditUser = userId => event => {
-        console.log('edit click List Component:', userId)
+    onEditUser = user => event => {
         const { onEditUser } = this.props
-        onEditUser(userId)
+        onEditUser(user)
     }
 
     printUserItem = user => (
         <li key={ user.id }>
             { user.name }
-            <button onClick={ this.onEditUser(user.id) }>Edit</button>
+            <button onClick={ this.onEditUser(user) }>Edit</button>
         </li>
     )
 
     render () {
-
         const { userList } = this.props
 
-        return(
-            <ul>{ userList.map(this.printUserItem) }</ul>
-        )
+        return( <ul>{ userList.map(this.printUserItem) }</ul> )
     }
 }
 

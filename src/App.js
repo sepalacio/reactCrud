@@ -1,51 +1,80 @@
 import React, { Component } from 'react'
-import axios from 'axios'
 
 import UserForm from'./components/UserForm'
 import ViewList from'./components/ViewList'
+import userRequests from './services/userRequests.service'
 import './App.css'
+
+
+const getUpdatedUser = (updatedUserId, updatedUser) => user => updatedUserId === user.id ? updatedUser : user
+
+const refreshUserData = (stateData, updatedUserId) => ({ data }) => stateData.map(getUpdatedUser(updatedUserId, data))
+
+const updateStateData = view => data => {
+  view.setState({
+    route: 'list',
+    data
+  })
+}
 
 class App extends Component {
 
   state = {
     data: [],
-    route: 'form'
+    route: 'list'
   }
 
   constructor () {
     super()
 
-    axios.get('https://jsonplaceholder.typicode.com/users')
+    userRequests.getUsers()
       .then( ({ data }) => this.setState({ data }))
   }
 
-  editUser = userId => {
-    console.log('edit click App Component:', userId)
+  showEditUser = user => {
     this.setState({
       route: 'form',
-      userId: userId
+      selectedUser: user
     })
   }
 
-  addUser = () => {
+  showAddUser = () => {
     this.setState({
       route : 'form'
     })
   }
 
+  addUser = user => {
+    userRequests.addUser(user)
+      .then( ({ data }) => {
+        const newData = this.state.data.concat(data)
+        this.setState({
+          data: newData,
+          route: 'list'
+        })
+      })
+  }
+
+  updateUser = (userId, formFields) => {
+    userRequests.updateUser(userId, formFields)
+      .then(refreshUserData(this.state.data, userId))
+      .then(updateStateData(this))
+  }
+
   render () {
-    console.log('Users: ', this.state)
-    
-    const { route, data } = this.state
+    const { route, data, selectedUser } = this.state
 
     return (
       <div className="App">
         { route === 'list' &&  <ViewList
           data={ data }
-          onAddUser={ this.addUser }
-          onEditUser={ this.editUser }/>
+          onAddUser={ this.showAddUser }
+          onEditUser={ this.showEditUser }/>
         }
-        { route === 'form' && <UserForm /> }
+        { route === 'form' && <UserForm
+          selectedUser={ selectedUser || {} }
+          onHandleSubmit={ this.addUser }
+          onHandleUpdate={ this.updateUser } /> }
       </div>
     )
   }
